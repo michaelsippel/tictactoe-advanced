@@ -28,10 +28,9 @@ endif
 
 CFLAGS = -std=c++11 $(INCLUDE)
 ASMFLAGS =
-LDFLAGS = -lSDL2 -lGL
+LDFLAGS = -lSDL2 -lGLEW -lGLU -lGL
 
 C_SRCS = $(shell find -name '*.cpp')
-A_SRCS = $(shell find -name '*.S')
 C_HDRS = $(shell find -name '*.h')
 SRCS = $(C_SRCS) $(A_SRCS)
 OBJS = $(addsuffix .$(TARGET).o,$(basename $(SRCS)))
