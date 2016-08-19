@@ -29,14 +29,14 @@ int main(int argc, char* argv[])
 
     double fovy = 60.0;
     double aspect = (double)width / (double)height;
-    double znear = 1.0;
+    double znear = 0.5;
     double zfar = 100.0;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective((GLdouble) fovy, (GLdouble) aspect, (GLdouble) znear, (GLdouble) zfar);
 
-    Field<3, int>* field = new Field<3, int>(Vector<3, int>(3,3,3));
-    Viewer* viewer = new Viewer();
+    Field3D* field = new Field3D(Vector3i(3,3,3));
+    Viewer* viewer = new Viewer(field);
 
     viewer->zoom(3.0);
 
@@ -101,8 +101,8 @@ int main(int argc, char* argv[])
             }
         }
 
-        viewer->rotateX(0.1 * rx * frametime);
-        viewer->rotateY(0.1 * ry * frametime);
+        viewer->rotateX(0.17 * rx * frametime);
+        viewer->rotateY(0.17 * ry * frametime);
 
         SDL_GL_SwapWindow(sdl_window);
     }

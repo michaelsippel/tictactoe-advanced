@@ -19,6 +19,7 @@ class Field
 
             this->cells = (elemType*) malloc(num_e * sizeof(elemType));
         }
+
         ~Field()
         {
             free(this->cells);
@@ -32,6 +33,11 @@ class Field
         elemType getCell(Vector<N, int> pos)
         {
             return this->cells[this->index(pos)];
+        }
+
+        Vector<N, int> getSize(void)
+        {
+            return this->size;
         }
 
     private:
@@ -50,3 +56,5 @@ class Field
         Vector<N, int> size;
         elemType* cells;
 };
+
+typedef Field<3, Field<3, int>*> Field3D;
