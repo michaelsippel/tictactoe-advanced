@@ -3,15 +3,17 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
+
 #include <field.h>
 #include <viewer.h>
+#include <renderer.h>
 
 int main(int argc, char* argv[])
 {
     printf("Hello World!\n");
 
-    int width = 800;
-    int height = 600;
+    int width = 1280;
+    int height = 720;
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 
@@ -26,6 +28,8 @@ int main(int argc, char* argv[])
     glEnable(GL_DEPTH_TEST);
     //glEnable(GL_CULL_FACE);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
     double fovy = 60.0;
     double aspect = (double)width / (double)height;
@@ -35,8 +39,18 @@ int main(int argc, char* argv[])
     glLoadIdentity();
     gluPerspective((GLdouble) fovy, (GLdouble) aspect, (GLdouble) znear, (GLdouble) zfar);
 
-    Field3D* field = new Field3D(Vector3i(3,3,3));
-    Viewer* viewer = new Viewer(field);
+    Field3D* field = new Field3D(Vector3i(3,3,3),
+                                 [] ()
+    {
+        return new Field<3, CellStatus>(Vector3i(3,3,3),
+                                        []()
+        {
+            return new CellStatus();
+        });
+    });
+
+    Viewer* viewer = new Viewer();
+    auto renderer = new Renderer<Field3D>(*field);
 
     viewer->zoom(3.0);
 
@@ -53,7 +67,8 @@ int main(int argc, char* argv[])
         time_prev = time_cur;
 
         viewer->clear();
-        viewer->draw();
+        viewer->loadMatrix();
+        renderer->draw();
 
         SDL_Event event;
         while(SDL_PollEvent(&event))

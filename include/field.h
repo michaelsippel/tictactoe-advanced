@@ -4,33 +4,47 @@
 #include <stdlib.h>
 #include <math/vector.h>
 
+template <typename T>
+class Renderer;
+
 using namespace huge;
+
+class CellStatus
+{
+    public:
+        CellStatus() :value(0) {}
+        CellStatus(int v) : value(v) {}
+        int value;
+
+        Renderer<CellStatus>* getRenderer(void);
+};
 
 template <int N, typename elemType>
 class Field
 {
     public:
-        Field(Vector<N, int> size_)
+        Field(Vector<N, int> size_, elemType* (*create) (void))
             : size(size_)
         {
-            int num_e = 1;
+            num_e = 1;
             for(int i = 0; i < N; i++)
                 num_e *=  this->size.data[i];
 
-            this->cells = (elemType*) malloc(num_e * sizeof(elemType));
+            this->cells = (elemType**) malloc(num_e * sizeof(elemType*));
+
+            for(int i=0; i < num_e; i++)
+                this->cells[i] = create();
         }
 
         ~Field()
         {
+            for(int i=0; i < num_e; i++)
+                delete this->cells[i];
+
             free(this->cells);
         }
 
-        void setCell(Vector<N, int> pos, elemType value)
-        {
-            this->cells[this->index(pos)] = value;
-        }
-
-        elemType getCell(Vector<N, int> pos)
+        elemType* getCell(Vector<N, int> pos)
         {
             return this->cells[this->index(pos)];
         }
@@ -39,6 +53,8 @@ class Field
         {
             return this->size;
         }
+
+        Renderer<Field<N, elemType>>* getRenderer(void);
 
     private:
         int index(Vector<N, int> pos)
@@ -54,7 +70,23 @@ class Field
         }
 
         Vector<N, int> size;
-        elemType* cells;
+        int num_e;
+        elemType** cells;
 };
 
-typedef Field<3, Field<3, int>*> Field3D;
+
+typedef Field<3, Field<3, CellStatus>> Field3D;
+/*
+#include <renderer.h>
+
+template <int N, typename elemType>
+Renderer<Field<N, elemType>>* Field<N, elemType>::getRenderer(void)
+{
+    return new Renderer<Field<N, elemType>>(*this);
+}
+
+Renderer<CellStatus>* CellStatus::getRenderer(void)
+{
+    return new Renderer<CellStatus>(*this);
+}
+*/
