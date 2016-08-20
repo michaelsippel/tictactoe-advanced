@@ -4,6 +4,8 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 
+#include <color.h>
+
 #include <field.h>
 #include <viewer.h>
 #include <renderer.h>
@@ -26,6 +28,7 @@ int main(int argc, char* argv[])
     }
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LINE_SMOOTH);
     //glEnable(GL_CULL_FACE);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glEnable(GL_BLEND);
@@ -51,6 +54,12 @@ int main(int argc, char* argv[])
 
     Viewer* viewer = new Viewer();
     auto renderer = new Renderer<Field3D>(*field);
+
+    Renderer<Field3D>* selector1 = NULL;
+    Renderer<Field<3, CellStatus>>* selector2 = NULL;
+
+    Vector3i selection = Vector3i(0, 0, 0);
+    Vector3i lvl1_select;
 
     viewer->zoom(3.0);
 
@@ -90,6 +99,54 @@ int main(int argc, char* argv[])
                         case SDLK_d:
                             ry = -1.0f;
                             break;
+
+                        case SDLK_ESCAPE:
+                            renderer->deselect();
+                            selector1 = NULL;
+                            selector2 = NULL;
+                            break;
+
+                        case SDLK_RETURN:
+                            if(selector1 == NULL)
+                            {
+                                selector1 = renderer;
+                                selector1->select(Color4f(0.8f, 0.0f, 0.0f, 0.8f));
+                                selector1->select(selection, Color4f(0.0f, 0.8f, 0.0f, 0.8f));
+                            }
+                            else if(selector2 == NULL)
+                            {
+                                lvl1_select = selection;
+                                selector2 = selector1->select(selection, Color4f(0.8f, 0.0f, 0.0f, 0.8f));
+                                selector2->select(selection, Color4f(0.0f, 0.8f, 0.0f, 0.8f));
+                            }
+                            else
+                            {
+                                *(field->getCell(lvl1_select)->getCell(selection)) = 1;
+                                renderer->deselect();
+                                selector1 = NULL;
+                                selector2 = NULL;
+                            }
+                            break;
+
+                        case SDLK_i:
+                            selection.x()++;
+                            selection.x() %= 3;
+                            goto update_selection;
+                        case SDLK_o:
+                            selection.y()++;
+                            selection.y() %= 3;
+                            goto update_selection;
+                        case SDLK_p:
+                            selection.z()++;
+                            selection.z() %= 3;
+                            goto update_selection;
+
+update_selection:
+                            if(selector2 == NULL)
+                                selector1->select(selection, Color4f(0.0f, 0.8f, 0.0f, 0.8f));
+                            else
+                                selector2->select(selection, Color4f(0.0f, 0.8f, 0.0f, 0.8f));
+                            break;
                     }
                     break;
 
@@ -114,6 +171,12 @@ int main(int argc, char* argv[])
                     ex = true;
                     break;
             }
+        }
+
+        int mx, my;
+        if (SDL_GetMouseState(&mx, &my) & SDL_BUTTON(SDL_BUTTON_LEFT))
+        {
+            // pressed left button
         }
 
         viewer->rotateX(0.17 * rx * frametime);

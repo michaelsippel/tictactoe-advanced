@@ -23,7 +23,7 @@
  */
 #include <limits.h>
 
-#include <huge/math/vector.h>
+#include <math/vector.h>
 
 namespace huge
 {

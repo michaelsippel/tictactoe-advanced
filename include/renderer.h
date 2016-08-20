@@ -10,7 +10,7 @@ class Renderer
         Renderer(T& object_) :object(object_) {};
         ~Renderer() {}
 
-        static void draw(T& obj) {}
+        static void draw(T& obj, bool selected) {}
         void draw(void)
         {
             this->draw(this->object);

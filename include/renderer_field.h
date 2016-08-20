@@ -5,26 +5,45 @@ template <int N, typename elemType>
 class Field;
 
 #include <field.h>
+#include <color.h>
+
+#define SELECT_COLOR(x) \
+                    if(selected) \
+                    { \
+                        glScalef(1.1f, 1.1f, 1.1f); \
+                        glColor4f(selectColor.r(), selectColor.g(), selectColor.b(), selectColor.a()); \
+                    } \
+                    else \
+                    { \
+                        glScalef(1.01f, 1.01f, 1.01f); \
+                        glColor4f(0.8f, 0.8f, 0.8f, x); \
+                    } \
 
 template <>
 class Renderer<CellStatus>
 {
     public:
         Renderer(CellStatus& obj)
-            :object(obj) {}
+            :status(obj), selected(false) {}
 
-        void draw(void)
+        void select(Color4f col)
         {
-            this->draw(this->object);
+            selectColor = col;
+            this->selected = true;
         }
 
-        static void draw(CellStatus& status)
+        void deselect(void)
+        {
+            this->selected = false;
+        }
+
+        void draw(void)
         {
             Renderer<enum cube> cube = Renderer<enum cube>();
             switch(status.value)
             {
                 case 0:
-                    glColor4f(0.8f, 0.8f, 0.8f, 0.1f);
+                    SELECT_COLOR(0.05);
                     cube.draw(LINED);
                     break;
 
@@ -41,7 +60,9 @@ class Renderer<CellStatus>
         }
 
     private:
-        CellStatus& object;
+        Color4f selectColor;
+        bool selected;
+        CellStatus& status;
 };
 
 template <typename elemType>
@@ -49,20 +70,42 @@ class Renderer<Field<3, elemType>>
 {
     public:
         Renderer(Field<3, elemType>& obj)
-            :object(obj) {}
+            :field(obj), selected(false), selectionRenderer(NULL) {}
 
-        void draw(void)
+        void select(Color4f col)
         {
-            this->draw(this->object);
+            selectColor = col;
+            selected = true;
         }
 
-        static void draw(Field<3, elemType>& field)
+        Renderer<elemType>* select(Vector3i pos, Color4f col)
+        {
+            deselect();
+            select(selectColor);
+            selection = pos;
+            selectionRenderer = new Renderer<elemType>(*field.getCell(selection));
+            selectionRenderer->select(col);
+            return selectionRenderer;
+        }
+
+        void deselect(void)
+        {
+            if(selected)
+            {
+                selected = false;
+                if(selectionRenderer != NULL)
+                    delete selectionRenderer;
+                selectionRenderer = NULL;
+            }
+        }
+
+        void draw(void)
         {
             static Renderer<enum cube> cube = Renderer<enum cube>();
 
             glPushMatrix();
 
-            glScalef(0.98f, 0.98f, 0.98f);
+            //glScalef(0.98f, 0.98f, 0.98f);
             glScalef(1.0f/(float)field.getSize().x(), 1.0f/(float)field.getSize().y(), 1.0f/(float)field.getSize().z());
 
             for(int x = 0; x < field.getSize().x(); x++)
@@ -76,20 +119,31 @@ class Renderer<Field<3, elemType>>
                                      (float)y - (float)(field.getSize().y()-1)/2.0f,
                                      (float)z - (float)(field.getSize().z()-1)/2.0f);
 
-                        auto s = field.getCell(Vector3i(x,y,z));
-                        Renderer<elemType>::draw(*s);
+                        if(selectionRenderer != NULL && selection.x() == x && selection.y() == y && selection.z() == z)
+                            selectionRenderer->draw();
+                        else
+                        {
+                            auto s = field.getCell(Vector3i(x,y,z));
+                            auto r = Renderer<elemType>(*s);
+                            r.draw();
+                        }
 
                         glPopMatrix();
                     }
                 }
             }
-
             glPopMatrix();
 
-            glColor4f(0.8f, 0.8f, 0.8f, 0.5f);
+            glPushMatrix();
+            SELECT_COLOR(0.5);
             cube.draw(LINED);
+            glPopMatrix();
         }
 
     private:
-        Field<3, elemType>& object;
+        Field<3, elemType>& field;
+        bool selected;
+        Renderer<elemType>* selectionRenderer;
+        Color4f selectColor;
+        Vector<3, int> selection;
 };
