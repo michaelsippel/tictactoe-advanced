@@ -1,0 +1,29 @@
+INCLUDE = -I./include -IC:\MinGW\msys\1.0\include\
+
+CC = C:\MinGW\bin\g++
+LD = C:\MinGW\bin\g++
+FIND = C:\MinGW\msys\1.0\bin\find
+BIN = tictactoe_win32.exe
+
+CFLAGS = -D GLEW_STATIC -m32 -std=c++11 $(INCLUDE)
+ASMFLAGS =
+LDFLAGS = -m32 -LC:\MinGW\msys\1.0\lib -LC:\MinGW\lib -lmingw32 -lSDL2main -lSDL2 -lglew32s -lopengl32 -lglu32
+
+C_SRCS = $(shell $(FIND) -name '*.cpp')
+C_HDRS = $(shell $(FIND) -name '*.h')
+SRCS = $(C_SRCS) $(A_SRCS)
+OBJS = $(addsuffix .$(TARGET).o, $(basename $(SRCS)))
+
+$(BIN): $(OBJS)
+	$(LD) -o $@ $^ $(LDFLAGS)
+
+%.$(TARGET).o: %.cpp
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+style: $(C_SRCS) $(C_HDRS)
+	astyle --style=allman --indent-classes --indent-switches $^
+
+clean:
+	rm $(OBJS)
+	rm $(BIN)
+
