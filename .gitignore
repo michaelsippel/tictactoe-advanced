@@ -9,4 +9,6 @@ makefile~
 Makefile~
 .gitignore~
 tictactoe_*
+server_*
 *.dll
+

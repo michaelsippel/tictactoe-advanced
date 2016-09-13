@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
+#include <iostream>
 
 #include <color.h>
 
@@ -8,9 +9,24 @@
 #include <viewer.h>
 #include <renderer.h>
 
+#include <connection.h>
+
 int main(int argc, char* argv[])
 {
-    printf("Hello World!\n");
+    std::cout << "Hello World!\n";
+    SDLNet_Init();
+
+    char servername[64];
+    char username[64];
+
+    std::cout << "Please the Server-IP: ";
+    std::cin >> servername;
+    std::cout << "Please enter your username:  ";
+    std::cin >> username;
+
+    Connection c = Connection(servername, 12345, username);
+
+    return 0;
 
     int width = 1280;
     int height = 720;

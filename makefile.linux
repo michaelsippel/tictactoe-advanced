@@ -28,22 +28,35 @@ endif
 
 CFLAGS = -std=c++11 $(INCLUDE)
 ASMFLAGS =
-LDFLAGS = -lSDL2 -lGLEW -lGLU -lGL
+SRV_LDFLAGS = -lSDL2_net
+CLT_LDFLAGS = -lSDL2_net -lSDL2 -lGLEW -lGLU -lGL
 
-C_SRCS = $(shell find -name '*.cpp')
+CLT_SRCS = $(shell find ./client -name '*.cpp')
+SRV_SRCS = $(shell find ./server -name '*.cpp')
 C_HDRS = $(shell find -name '*.h')
-SRCS = $(C_SRCS) $(A_SRCS)
-OBJS = $(addsuffix .$(TARGET).o,$(basename $(SRCS)))
+CLT_OBJS = $(addsuffix .$(TARGET).o,$(basename $(CLT_SRCS)))
+SRV_OBJS = $(addsuffix .$(TARGET).o,$(basename $(SRV_SRCS)))
 
-$(BIN): $(OBJS)
-	$(LD) $(LDFLAGS) -o $@ $^
+CLT_BIN = $(BIN)
+SRV_BIN = server_$(TARGET)
+
+all: $(CLT_BIN) $(SRV_BIN)
+
+$(CLT_BIN): $(CLT_OBJS)
+	$(LD) $(CLT_LDFLAGS) -o $@ $^
+
+$(SRV_BIN): $(SRV_OBJS)
+	$(LD) $(SRV_LDFLAGS) -o $@ $^
 
 %.$(TARGET).o: %.cpp
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-style: $(C_SRCS) $(C_HDRS)
+style: $(CLT_SRCS) $(SRV_SRCS) $(C_HDRS)
 	astyle --style=allman --indent-classes --indent-switches $^
 
 clean:
-	rm $(OBJS)
-	rm $(BIN)
+	rm $(CLT_OBJS)
+	rm $(SRV_OBJS)
+	rm $(CLT_BIN)
+	rm $(SRV_BIN)
+
