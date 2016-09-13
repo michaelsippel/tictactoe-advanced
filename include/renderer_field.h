@@ -15,7 +15,6 @@ class Field;
                     } \
                     else \
                     { \
-                        glScalef(1.01f, 1.01f, 1.01f); \
                         glColor4f(0.8f, 0.8f, 0.8f, x); \
                     } \
 
@@ -48,11 +47,13 @@ class Renderer<CellStatus>
                     break;
 
                 case 1:
+                    glScalef(0.6f, 0.6f, 0.6f);
                     glColor4f(0.8f, 0.0f, 0.0f, 1.0f);
                     cube.draw(SOLID);
                     break;
 
                 case 2:
+                    glScalef(0.6f, 0.6f, 0.6f);
                     glColor4f(0.0f, 0.0f, 0.8f, 1.0f);
                     cube.draw(SOLID);
                     break;
@@ -135,6 +136,7 @@ class Renderer<Field<3, elemType>>
             glPopMatrix();
 
             glPushMatrix();
+            glScalef(1.01f, 1.01f, 1.01f);
             SELECT_COLOR(0.5);
             cube.draw(LINED);
             glPopMatrix();

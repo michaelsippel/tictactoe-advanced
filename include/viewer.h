@@ -1,7 +1,6 @@
 #pragma once
 
 #include <GL/glew.h>
-#include <GL/gl.h>
 #include <math/vector.h>
 
 #include <field.h>

@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
 
 #include <color.h>
 
@@ -16,6 +14,8 @@ int main(int argc, char* argv[])
 
     int width = 1280;
     int height = 720;
+    bool supersampling = false;
+    double fovy = 60.0;
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 
@@ -29,12 +29,11 @@ int main(int argc, char* argv[])
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LINE_SMOOTH);
-    //glEnable(GL_CULL_FACE);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
-    double fovy = 60.0;
+
     double aspect = (double)width / (double)height;
     double znear = 0.5;
     double zfar = 100.0;
@@ -75,10 +74,39 @@ int main(int argc, char* argv[])
         float frametime = time_cur - time_prev;
         time_prev = time_cur;
 
+        static float t = 0.0f;
+        static int nframes = 0;
+        t += frametime;
+        nframes++;
+        if(t >= 1000.0f)
+        {
+            printf("%d FPS, %f ms\n", nframes, frametime);
+            nframes = 0;
+            t = 0.0f;
+        }
+
+        // rendering
         viewer->clear();
         viewer->loadMatrix();
-        renderer->draw();
 
+        if(supersampling)
+        {
+            glMatrixMode(GL_MODELVIEW);
+            for(int i = 0; i < 4; i++)
+            {
+                glPushMatrix();
+                glTranslatef((i % 2) * 0.5f / width, (i / 2) * 0.5f / height, 0.0f);
+                renderer->draw();
+                glAccum(i ? GL_ACCUM : GL_LOAD, 0.25);
+                glPopMatrix();
+            }
+
+            glAccum(GL_RETURN, 1.0f);
+        }
+        else
+            renderer->draw();
+
+        // event handling
         SDL_Event event;
         while(SDL_PollEvent(&event))
         {
@@ -142,9 +170,9 @@ int main(int argc, char* argv[])
                             goto update_selection;
 
 update_selection:
-                            if(selector2 == NULL)
+                            if(selector1 != NULL && selector2 == NULL)
                                 selector1->select(selection, Color4f(0.0f, 0.8f, 0.0f, 0.8f));
-                            else
+                            else if(selector2 != NULL)
                                 selector2->select(selection, Color4f(0.0f, 0.8f, 0.0f, 0.8f));
                             break;
                     }
@@ -179,9 +207,11 @@ update_selection:
             // pressed left button
         }
 
+        // animation
         viewer->rotateX(0.17 * rx * frametime);
         viewer->rotateY(0.17 * ry * frametime);
 
+        // swap buffers
         SDL_GL_SwapWindow(sdl_window);
     }
 
