@@ -25,6 +25,9 @@ int main(int argc, char* argv[])
     std::cin >> username;
 
     Connection c = Connection(servername, 12345, username);
+    c.getPlayers();
+
+    std::cout << "Connected.\n";
 
     return 0;
 

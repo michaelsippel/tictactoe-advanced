@@ -37,3 +37,34 @@ Connection::Connection(char const* const servername, uint16_t serverPort, char c
     else
         printf("error: couldn't recieve ID\n");
 }
+
+Connection::~Connection()
+{
+    connSignal sig = LOGOUT;
+    sendPackage(this->server, &sig);
+
+    SDLNet_TCP_Close(this->server);
+}
+
+void Connection::getPlayers(void)
+{
+    printf("requesting player list..\n");
+
+    connSignal sig = REQ_PLAYERLIST;
+    sendPackage(this->server, &sig);
+
+    uint32_t nplayers;
+    recievePackage(this->server, &nplayers);
+
+    for(int i=0; i < nplayers; i++)
+    {
+        LoginPackage p;
+        recievePackage(this->server, &p);
+        this->playerlist.push_back(p);
+
+        printf("* %s\n", p.name);
+    }
+
+    sig = OK;
+    sendPackage(this->server, &sig);
+}

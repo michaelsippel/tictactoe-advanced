@@ -9,7 +9,7 @@ CFLAGS = -D GLEW_STATIC -m32 -std=c++11 $(INCLUDE)
 ASMFLAGS =
 LDFLAGS = -m32 -LC:\MinGW\msys\1.0\lib -LC:\MinGW\lib -lmingw32 -lSDL2main -lSDL2 -lglew32s -lopengl32 -lglu32
 
-C_SRCS = $(shell $(FIND) -name '*.cpp')
+C_SRCS = $(shell $(FIND) -name ./client '*.cpp')
 C_HDRS = $(shell $(FIND) -name '*.h')
 SRCS = $(C_SRCS) $(A_SRCS)
 OBJS = $(addsuffix .$(TARGET).o, $(basename $(SRCS)))
