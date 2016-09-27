@@ -2,6 +2,8 @@
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 #include <iostream>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include <color.h>
 
@@ -16,6 +18,8 @@ int main(int argc, char* argv[])
     std::cout << "Hello World!\n";
     SDLNet_Init();
 
+    //Connection bot = Connection("localhost", 2365, "testbot");
+
     char servername[64];
     char username[64];
 
@@ -24,12 +28,43 @@ int main(int argc, char* argv[])
     std::cout << "Please enter your username:  ";
     std::cin >> username;
 
-    Connection c = Connection(servername, 12345, username);
+    Connection c = Connection(servername, 2365, username);
+
+    std::cout << "Connected.\n\n";
+
     c.getPlayers();
 
-    std::cout << "Connected.\n";
+    char pname[64];
 
-    return 0;
+ask:
+    std::cout << "\nChoose a player to start a new game with:\n";
+
+    while(c.handle() != 1)
+    {
+        char fc = 0;
+
+        int flags = fcntl(0, F_GETFL, 0);
+        fcntl(0, F_SETFL, flags | O_NONBLOCK);
+
+        bool typed = ( read(0, &fc, 1) > 0 ) && fc != '\0' && fc != ' ' && fc != '\n';
+
+        flags = fcntl(0, F_GETFL, 0);
+        fcntl(0, F_SETFL, flags & ~O_NONBLOCK);
+
+        if(typed)
+        {
+            pname[0] = fc;
+            std::cin >> (&pname[1]);
+            std::cout << "\n";
+            if(c.reqGame(pname) != 0)
+                goto ask;
+            else
+                goto game;
+        }
+        usleep(500000);
+    }
+
+game:
 
     int width = 1280;
     int height = 720;

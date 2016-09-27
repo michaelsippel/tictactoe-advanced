@@ -1,20 +1,22 @@
 #pragma once
 
-#include <set>
+#include <map>
 #include <server/packages.h>
+
+class Game;
 
 class Client : public Socket
 {
     public:
         Client(TCPsocket sock_);
-        void logout(std::set<Client*>& playerlist, SDLNet_SocketSet& set);
+        ~Client();
 
-        char name[64];
+        void handle(std::map<uint32_t, Client*>::iterator it, std::map<uint32_t, Client*>& playerlist,
+                    std::map<uint32_t, Game*>& gamelist, SDLNet_SocketSet& set);
+        char* name;
 
-        unsigned int id;
-        static unsigned int id_counter;
-
-        LoginPackage genPackagage();
-
-        void handle(std::set<Client*>& playerlist, SDLNet_SocketSet& set);
+    private:
+        // actions
+        void logout(std::map<uint32_t, Client*>::iterator it, std::map<uint32_t, Client*>& playerlist,
+                    SDLNet_SocketSet& set);
 };

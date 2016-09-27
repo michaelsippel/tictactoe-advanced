@@ -1,4 +1,4 @@
-#include <set>
+#include <map>
 #include <stdio.h>
 #include <unistd.h>
 #include <SDL2/SDL_net.h>
@@ -6,16 +6,12 @@
 #include <server/packages.h>
 #include <server/client.h>
 
-Client* establishConnection(SDLNet_SocketSet& set, TCPsocket server)
+Client* establishConnection(SDLNet_SocketSet& set, TCPsocket client, uint32_t id)
 {
-    TCPsocket client = SDLNet_TCP_Accept(server);
-    if (client == NULL)
-        return NULL;
-
     Client *newClient = new Client(client);
 
     newClient->sendPackage(ID);
-    newClient->sendPackage(newClient->id);
+    newClient->sendPackage(id);
 
     connSignal sig;
     newClient->recievePackage(&sig);
@@ -43,40 +39,47 @@ int main(int argc, char* argv[])
     IPaddress address;
     TCPsocket server;
 
-    if (SDLNet_ResolveHost (&address, NULL, 12345) == -1)
+    if (SDLNet_ResolveHost (&address, NULL, 2365) == -1)
     {
-        printf ("[server] SDLNet_ResolveHost: %s\n", SDLNet_GetError ());
-        SDLNet_Quit ();
+        printf ("[server] SDLNet_ResolveHost: %s\n", SDLNet_GetError());
+        SDLNet_Quit();
         exit (1);
     }
 
     server = SDLNet_TCP_Open (&address);
-    if (server == NULL)
+    if (! server)
     {
-        printf ("[server] TCP_Open: %s\n", SDLNet_GetError ());
-        SDLNet_Quit ();
+        printf ("[server] TCP_Open: %s\n", SDLNet_GetError());
+        SDLNet_Quit();
         exit (-1);
     }
 
-    std::set<Client*> clients;
+    std::map<uint32_t, Client*> clients;
+    std::map<uint32_t, Game*> games;
     SDLNet_SocketSet set = SDLNet_AllocSocketSet(10);
 
+    uint32_t id_counter = 0;
     while(1)
     {
-        Client* c = establishConnection(set, server);
-        if(c != NULL)
+        usleep(2000000);
+
+        // add new clients
+        TCPsocket socket = SDLNet_TCP_Accept(server);
+        if(socket != NULL)
         {
-            clients.insert(c);
+            uint32_t id = id_counter++;
+            Client* c = establishConnection(set, socket, id);
+            clients.insert(std::pair<uint32_t, Client*>(id, c));
         }
 
+        // handle clients
         if(SDLNet_CheckSockets(set, 10))
         {
-            for(Client* c : clients)
-                c->handle(clients, set);
+            for(auto it = clients.begin(); it != clients.end(); ++it)
+                it->second->handle(it, clients, games, set);
         }
-
-        usleep(1000);
     }
 
+    SDLNet_Quit();
     return 0;
 }
