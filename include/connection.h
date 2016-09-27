@@ -7,7 +7,7 @@
 
 #include <server/packages.h>
 
-class Connection
+class Connection : public Socket
 {
     public:
         Connection(char const* const servername, uint16_t serverPort, char const* const username);
@@ -19,9 +19,10 @@ class Connection
         ActionPackage recieveAction(void);
 
         std::vector<LoginPackage> playerlist;
+
     private:
-        IPaddress server_address;
-        TCPsocket server;
+        static TCPsocket setupSocket(char const* const servername, uint16_t serverPort);
+
         SDLNet_SocketSet set;
         unsigned int id;
 };

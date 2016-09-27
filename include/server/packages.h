@@ -3,28 +3,41 @@
 
 #include <SDL2/SDL_net.h>
 
-template<typename DataType>
-int recievePackage(TCPsocket client, DataType* data)
+class Socket
 {
-    if(SDLNet_TCP_Recv(client, (void*)data, sizeof(DataType)) != sizeof(DataType))
-    {
-        printf("couldn't recieve package!\n");
-        return -1;
-    }
 
-    return 0;
-}
+    public:
+        Socket(TCPsocket sock_)
+            : sock(sock_)
+        {}
 
-template<typename DataType>
-int sendPackage(TCPsocket client, DataType* data)
-{
-    if(SDLNet_TCP_Send(client, (void*)data, sizeof(DataType)) != sizeof(DataType))
-    {
-        printf("couldn't send package!\n");
-        return -1;
-    }
-    return 0;
-}
+        template<typename DataType>
+        int recievePackage(DataType* const data)
+        {
+            if(SDLNet_TCP_Recv(this->sock, (void*)data, sizeof(DataType)) != sizeof(DataType))
+            {
+                printf("couldn't recieve package!\n");
+                return -1;
+            }
+
+            return 0;
+        }
+
+        template<typename DataType>
+        int sendPackage(DataType const& data)
+        {
+            if(SDLNet_TCP_Send(this->sock, (void*)&data, sizeof(DataType)) != sizeof(DataType))
+            {
+                printf("couldn't send package!\n");
+                return -1;
+            }
+
+            return 0;
+        }
+
+    protected:
+        TCPsocket sock;
+};
 
 typedef enum
 {

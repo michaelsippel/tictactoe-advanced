@@ -6,29 +6,21 @@
 #include <connection.h>
 
 Connection::Connection(char const* const servername, uint16_t serverPort, char const* const username)
+    : Socket(setupSocket(servername, serverPort))
 {
-    SDLNet_ResolveHost(&this->server_address, servername, serverPort);
-    this->server = SDLNet_TCP_Open(&this->server_address);
-    if(!this->server)
-    {
-        printf("could not connect to server\n");
-        exit(-1);
-    }
-
     LoginPackage login;
     strcpy(login.name, username);
-    sendPackage(this->server, &login);
+    sendPackage(login);
 
     connSignal sig;
-    recievePackage(this->server, &sig);
+    recievePackage(&sig);
     if(sig == ID)
     {
-        recievePackage(this->server, &this->id);
-        connSignal sig = OK;
-        sendPackage(this->server, &sig);
+        recievePackage(&this->id);
+        sendPackage(OK);
 
         this->set = SDLNet_AllocSocketSet(1);
-        if(SDLNet_TCP_AddSocket(this->set, this->server) == -1)
+        if(SDLNet_TCP_AddSocket(this->set, this->sock) == -1)
         {
             printf("Unable to add server-socket to sockset\n");
             exit(-1);
@@ -38,33 +30,44 @@ Connection::Connection(char const* const servername, uint16_t serverPort, char c
         printf("error: couldn't recieve ID\n");
 }
 
+TCPsocket Connection::setupSocket(char const* const servername, uint16_t serverPort)
+{
+    IPaddress server_address;
+    SDLNet_ResolveHost(&server_address, servername, serverPort);
+    TCPsocket socket = SDLNet_TCP_Open(&server_address);
+    if(!socket)
+    {
+        printf("could not connect to server\n");
+        exit(-1);
+    }
+
+    return socket;
+}
+
 Connection::~Connection()
 {
-    connSignal sig = LOGOUT;
-    sendPackage(this->server, &sig);
-
-    SDLNet_TCP_Close(this->server);
+    sendPackage(LOGOUT);
+    SDLNet_TCP_Close(this->sock);
 }
 
 void Connection::getPlayers(void)
 {
     printf("requesting player list..\n");
 
-    connSignal sig = REQ_PLAYERLIST;
-    sendPackage(this->server, &sig);
+    sendPackage(REQ_PLAYERLIST);
 
     uint32_t nplayers;
-    recievePackage(this->server, &nplayers);
+    recievePackage(&nplayers);
 
+    printf("%d players logged in\n", nplayers);
     for(int i=0; i < nplayers; i++)
     {
         LoginPackage p;
-        recievePackage(this->server, &p);
+        recievePackage(&p);
         this->playerlist.push_back(p);
 
         printf("* %s\n", p.name);
     }
 
-    sig = OK;
-    sendPackage(this->server, &sig);
+    sendPackage(OK);
 }
