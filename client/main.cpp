@@ -32,21 +32,24 @@ int main(int argc, char* argv[])
 
     std::cout << "Connected.\n\n";
 
-    c.getPlayers();
-
     char pname[64];
 
-ask:
-    std::cout << "\nChoose a player to start a new game with:\n";
-
-    while(c.handle() != 1)
+    // wait for game
+    uint32_t game_id = -1;
+    while((int)game_id < 0)
     {
-        char fc = 0;
+        c.getPlayers();
+
+        std::cout << "\033[2J\nChoose a player to start a new game with:\n";
+        for(auto name : c.playerlist)
+            std::cout << "* " << name.first << "\n";
+
 
         int flags = fcntl(0, F_GETFL, 0);
         fcntl(0, F_SETFL, flags | O_NONBLOCK);
 
-        bool typed = ( read(0, &fc, 1) > 0 ) && fc != '\0' && fc != ' ' && fc != '\n';
+        char fc = getchar();
+        bool typed = fc != (char)-1 && fc != '\0' && fc != ' ' && fc != '\n';
 
         flags = fcntl(0, F_GETFL, 0);
         fcntl(0, F_SETFL, flags & ~O_NONBLOCK);
@@ -56,15 +59,16 @@ ask:
             pname[0] = fc;
             std::cin >> (&pname[1]);
             std::cout << "\n";
-            if(c.reqGame(pname) != 0)
-                goto ask;
-            else
-                goto game;
+
+            game_id = c.reqGame(pname);
         }
+        else
+            game_id = c.handle();
+
         usleep(500000);
     }
 
-game:
+    printf("start game %d...\n", game_id);
 
     int width = 1280;
     int height = 720;
@@ -161,6 +165,23 @@ game:
             renderer->draw();
 
         // event handling
+
+        c.handle();
+        while(!c.actions.empty())
+        {
+            auto a = c.actions.back();
+            c.actions.pop_back();
+
+            *(field->getCell(a.first)->getCell(a.second)) = 2;
+
+            selection = a.second;
+
+            selector1 = renderer;
+            selector1->select(Color4f(0.8f, 0.0f, 0.0f, 0.8f));
+            goto set_selectors;
+        }
+
+
         SDL_Event event;
         while(SDL_PollEvent(&event))
         {
@@ -189,24 +210,30 @@ game:
                             break;
 
                         case SDLK_RETURN:
-                            if(selector1 == NULL)
+                            if(c.reqAction())
                             {
-                                selector1 = renderer;
-                                selector1->select(Color4f(0.8f, 0.0f, 0.0f, 0.8f));
-                                selector1->select(selection, Color4f(0.0f, 0.8f, 0.0f, 0.8f));
-                            }
-                            else if(selector2 == NULL)
-                            {
-                                lvl1_select = selection;
-                                selector2 = selector1->select(selection, Color4f(0.8f, 0.0f, 0.0f, 0.8f));
-                                selector2->select(selection, Color4f(0.0f, 0.8f, 0.0f, 0.8f));
-                            }
-                            else
-                            {
-                                *(field->getCell(lvl1_select)->getCell(selection)) = 1;
-                                renderer->deselect();
-                                selector1 = NULL;
-                                selector2 = NULL;
+set_selectors:
+                                if(selector1 == NULL)
+                                {
+                                    selector1 = renderer;
+                                    selector1->select(Color4f(0.8f, 0.0f, 0.0f, 0.8f));
+                                    selector1->select(selection, Color4f(0.0f, 0.8f, 0.0f, 0.8f));
+                                }
+                                else if(selector2 == NULL)
+                                {
+                                    lvl1_select = selection;
+                                    selector2 = selector1->select(selection, Color4f(0.8f, 0.0f, 0.0f, 0.8f));
+                                    selector2->select(selection, Color4f(0.0f, 0.8f, 0.0f, 0.8f));
+                                }
+                                else
+                                {
+                                    *(field->getCell(lvl1_select)->getCell(selection)) = 1;
+                                    c.action(game_id, lvl1_select, selection);
+
+                                    renderer->deselect();
+                                    selector1 = NULL;
+                                    selector2 = NULL;
+                                }
                             }
                             break;
 

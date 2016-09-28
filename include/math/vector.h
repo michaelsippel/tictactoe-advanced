@@ -22,6 +22,8 @@
 	@author Michael Sippel <micha@infinitycoding.de>
  */
 
+#include <cstdint>
+
 namespace huge
 {
 
@@ -188,9 +190,9 @@ class Vector<4, T> : public VectorBase<4, T>
 };
 
 
-typedef Vector<2, int> Vector2i;
-typedef Vector<3, int> Vector3i;
-typedef Vector<4, int> Vector4i;
+typedef Vector<2, uint32_t> Vector2i;
+typedef Vector<3, uint32_t> Vector3i;
+typedef Vector<4, uint32_t> Vector4i;
 
 typedef Vector<2, unsigned int> Vector2ui;
 typedef Vector<3, unsigned int> Vector3ui;

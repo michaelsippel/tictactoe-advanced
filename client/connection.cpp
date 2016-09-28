@@ -35,6 +35,27 @@ Connection::~Connection()
     SDLNet_TCP_Close(this->sock);
 }
 
+bool Connection::reqAction()
+{
+    return this->reqaction;
+}
+
+void Connection::action(uint32_t game_id, Vector3i lvl1, Vector3i lvl2)
+{
+    this->sendPackage(ACTION);
+    this->sendPackage(game_id);
+    this->sendPackage(std::pair<Vector3i,Vector3i>(lvl1, lvl2));
+
+    connSignal sig;
+    this->recievePackage(&sig);
+    if(sig == OK)
+        this->reqaction = false;
+    else
+        printf("Error trying to send move\n");
+
+    this->sendPackage(OK);
+}
+
 int Connection::handle()
 {
     if(SDLNet_CheckSockets(this->set, 1))
@@ -58,16 +79,34 @@ int Connection::handle()
                     if(res == 'y' || res == 'Y')
                     {
                         this->sendPackage(OK);
-                        return 1;
+
+                        uint32_t game_id;
+                        this->recievePackage(&game_id);
+                        return game_id;
                     }
                     else
                         this->sendPackage(NO);
                 }
                 break;
+
+                case REQ_ACTION:
+                    this->reqaction = true;
+                    break;
+
+                case ACTION:
+                {
+                    uint32_t game_id;
+                    std::pair<Vector3i,Vector3i> a;
+                    this->recievePackage(&game_id);
+                    this->recievePackage(&a);
+
+                    this->actions.push_back(a);
+                }
+                break;
             }
         }
     }
-    return 0;
+    return -1;
 }
 
 int Connection::reqGame(std::string name)
@@ -92,21 +131,23 @@ int Connection::reqGame(uint32_t player_id)
         return -1;
     }
 
+    uint32_t game_id;
+    this->recievePackage(&game_id);
+
     sendPackage(OK);
 
-    return 0;
+    return game_id;
 }
 
 void Connection::getPlayers(void)
 {
-    printf("requesting player list..\n");
+    this->playerlist.clear();
 
     sendPackage(REQ_PLAYERLIST);
 
     uint32_t nplayers;
     recievePackage(&nplayers);
 
-    printf("%d players logged in\n", nplayers);
     for(int i=0; i < nplayers; i++)
     {
         uint32_t id;
@@ -114,7 +155,6 @@ void Connection::getPlayers(void)
         char* name = this->recieveString();
 
         this->playerlist.insert(std::pair<std::string, uint32_t>(name, id));
-        printf("* %s\n", name);
     }
 
     sendPackage(OK);

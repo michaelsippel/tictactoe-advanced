@@ -1,19 +1,25 @@
 #pragma once
 
-#include <field.h>
+#include <cstdint>
+#include <vector>
+#include <math/vector.h>
 
 class Client;
+
+using namespace huge;
 
 class Game
 {
     public:
-        Game();
-        ~Game();
+        Game(uint32_t id0, uint32_t id1);
 
-        void handle();
+        uint32_t next_player_id();
+        uint32_t move(std::pair<Vector3i, Vector3i> m);
+
+        // TODO: load & save
 
     private:
+        std::vector< std::pair<Vector3i, Vector3i> > moves[2];
         uint32_t player_ids[2];
-        Client* players[2];
-        Field3D* field;
+        int next;
 };

@@ -23,7 +23,7 @@ template <int N, typename elemType>
 class Field
 {
     public:
-        Field(Vector<N, int> size_, elemType* (*create) (void))
+        Field(Vector<N, uint32_t> size_, elemType* (*create) (void))
             : size(size_)
         {
             num_e = 1;
@@ -44,12 +44,12 @@ class Field
             free(this->cells);
         }
 
-        elemType* getCell(Vector<N, int> pos)
+        elemType* getCell(Vector<N, uint32_t> pos)
         {
             return this->cells[this->index(pos)];
         }
 
-        Vector<N, int> getSize(void)
+        Vector<N, uint32_t> getSize(void)
         {
             return this->size;
         }
@@ -57,7 +57,7 @@ class Field
         Renderer<Field<N, elemType>>* getRenderer(void);
 
     private:
-        int index(Vector<N, int> pos)
+        int index(Vector<N, uint32_t> pos)
         {
             int index = 0;
             size_t off = 1;
@@ -69,7 +69,7 @@ class Field
             return index;
         }
 
-        Vector<N, int> size;
+        Vector<N, uint32_t> size;
         int num_e;
         elemType** cells;
 };

@@ -147,5 +147,5 @@ class Renderer<Field<3, elemType>>
         bool selected;
         Renderer<elemType>* selectionRenderer;
         Color4f selectColor;
-        Vector<3, int> selection;
+        Vector3i selection;
 };

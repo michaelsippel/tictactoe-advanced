@@ -104,4 +104,5 @@ typedef enum
     REQ_PLAYERLIST,
     REQ_GAME,
     ACTION,
+    REQ_ACTION,
 } connSignal;
