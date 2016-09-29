@@ -3,6 +3,7 @@
 
 #include <SDL2/SDL_net.h>
 #include <cstdlib>
+#include <cstring>
 
 class Socket
 {

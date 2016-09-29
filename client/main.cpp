@@ -3,7 +3,10 @@
 #include <GL/glew.h>
 #include <iostream>
 #include <unistd.h>
+
+#ifndef _WIN32
 #include <fcntl.h>
+#endif
 
 #include <color.h>
 
@@ -36,6 +39,8 @@ int main(int argc, char* argv[])
 
     // wait for game
     uint32_t game_id = -1;
+
+    #ifndef _WIN32
     while((int)game_id < 0)
     {
         c.getPlayers();
@@ -67,6 +72,22 @@ int main(int argc, char* argv[])
 
         usleep(500000);
     }
+    #else
+    while((int)game_id < 0)
+    {
+    c.getPlayers();
+
+    std::cout << "\033[2J\nChoose a player to start a new game with:\n";
+    for(auto name : c.playerlist)
+        std::cout << "* " << name.first << "\n";
+    
+    std::cin >> pname;
+    std::cout << "\n";
+
+    game_id = c.reqGame(pname);
+    }
+    #endif
+
 
     printf("start game %d...\n", game_id);
 

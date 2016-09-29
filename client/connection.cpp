@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <map>
 #include <string>
+#include <cstring>
 #include <iostream>
 #include <SDL2/SDL_net.h>
 #include <server/packages.h>
